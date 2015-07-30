@@ -88,6 +88,10 @@ function! tmux#SelectPane()
     nnoremap <buffer> <silent> d :call system("tmux display-panes")<CR>
 endfunction
 
+function! tmux#height()
+    return tmux#do("display-message -pF '#{pane_height}'")
+end
+
 function! tmux#do(cmd)
     return system("tmux " . a:cmd . " -t " . s:target)
 endfunction
@@ -103,7 +107,7 @@ function! s:fromBottom(n, height)
 endfunction
 
 function! tmux#read(startLine, ...)
-    let height = tmux#do("display-message -pF '#{pane_height}'")
+    let height = tmux#height()
 
     let startLine = a:startLine
     if a:0 ==# 0
@@ -114,8 +118,9 @@ function! tmux#read(startLine, ...)
 
     let startLine = s:fromBottom(startLine, height)
     let endLine = s:fromBottom(endLine, height)
+    let result = tmux#do("capture-pane -pS " . startLine . " -E " . endLine)
 
-    return tmux#do("capture-pane -pS " . startLine . " -E " . endLine)
+    return strpart(result, 0, len(result) - 1)
 endfunction
 
 function! tmux#send(text)

@@ -30,6 +30,7 @@ function! ghci#sendline()
 endfunction
 
 function! ghci#type(name)
+    " BUG: long types will require multiple tmux lines
     call tmux#send(":type " . a:name . "\n")
     let type = tmux#read(1)
     echom type
@@ -58,10 +59,19 @@ function! ghci#getarounddef()
     " Get first TLD above us
     while 1
         let line = getline(".")
+
+        " Exit early if we hit a data keyword -- nothing to find
+        if line =~ "\\v^(data|import|module|newtype|type)"
+            echoerr "Not inside a definition"
+            call winrestview(winview)
+            return []
+        endif
+
         if line =~ "\\v^([^ \t:\\=\\|]+)((\\s+[()a-zA-Z0-9]+)*\\s*(::|\\=|\\|))="
             silent normal! 0*
             break
         elseif line(".") ==# 1
+            echoerr "Not inside a definition"
             call winrestview(winview)
             return []
         endif
@@ -78,7 +88,7 @@ function! ghci#getarounddef()
     let firstLine = line(".")
 
     " Find the next TLD below us, keeping track of lines between
-    let regex = "\\v^(<" . name . ">|\\s)"
+    let regex = "\\v(^<" . name . ">|^\\s|^$)"
     let lines = ""
     while 1
         let line = getline(".")

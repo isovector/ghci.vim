@@ -1,6 +1,5 @@
 let s:not_prefixable_keywords = [ "newtype", "import", "data", "instance", "class", "{-#", "type", "case", "do", "let", "default", "foreign", "--"]
 let s:spaces = repeat(" ", 4)
-let s:tab = "   "
 
 function! ProcessLines(lines)
     let l:lines = a:lines
@@ -67,7 +66,7 @@ endfunction
 let g:ghci_vim_process = 1
 
 function! haskell#escape(text)
-    let l:text = substitute(a:text, s:tab, s:spaces, "g")
+    let l:text = substitute(a:text, "\t", s:spaces, "g")
     let l:lines = split(l:text, "\n")
     let l:lines = StripComments(l:lines)
     let l:lines = ProcessLines(l:lines)
