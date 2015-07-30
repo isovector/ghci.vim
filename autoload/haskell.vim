@@ -45,26 +45,6 @@ function! StripComments(lines)
     return l:ret
 endfunction
 
-function! VimGhciWithWord(cmd)
-    call VimGhciCommand(":" . a:cmd . " " . expand("<cword>"))
-endfunction
-
-function! VimGhciWithLine(cmd)
-    call VimGhciCommand(":" . a:cmd . " " . line("."))
-endfunction
-
-function! VimGhciCommand(cmd)
-    let g:ghci_vim_process = 0
-    call SlimuxSendCode(a:cmd . "\n")
-    let g:ghci_vim_process = 1
-endfunction
-
-function! VimGhciEval()
-    call VimGhciCommand(expand("<cword>"))
-endfunction
-
-let g:ghci_vim_process = 1
-
 function! haskell#escape(text)
     let l:text = substitute(a:text, "\t", s:spaces, "g")
     let l:lines = split(l:text, "\n")
