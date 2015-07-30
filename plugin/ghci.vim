@@ -1,10 +1,9 @@
-let g:submode_timeout = 0
+command! GhciInit call tmux#SelectPane()
 
-call submode#enter_with('ghci', 'n', 's', 's', ':call tmux#SelectPane()<CR>')
-call submode#leave_with('ghci', 'n', '', '<Esc>')
-call submode#map('ghci', 'n', 's', 't', ':call ghci#type()<CR>')
-call submode#map('ghci', 'n', 's', 'T', ':call ghci#filltype()<CR>')
-call submode#map('ghci', 'n', 's', 's', ':SubmodeRestoreOptions<CR>:set opfunc=ghci#sendmove<CR>g@')
-
+nnoremap <silent> ss :set opfunc=ghci#sendmove<CR>g@
+nnoremap <silent> sss :call ghci#sendline()<CR>
+nnoremap <silent> st :call ghci#type()<CR>
+nnoremap <silent> sT :call ghci#filltype()<CR>
+nnoremap <silent> sL :call ghci#reloadfile()<CR>
 
 

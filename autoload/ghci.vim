@@ -13,8 +13,6 @@ function! ghci#sendmove(type, ...)
         silent exe "normal! `[v`]y"
     endif
 
-    echom a:type
-
     let @@ = @@ . "\n"
 
     if a:type == "char"
@@ -27,14 +25,26 @@ function! ghci#sendmove(type, ...)
     let @@ = saveReg
 endfunction
 
+function! ghci#sendline()
+    call tmux#sendcode(getline("."))
+endfunction
+
 function! ghci#type()
     let word = expand("<cword>")
     call tmux#send(":type " . word . "\n")
+    let type = tmux#read(1)
+    echom type
+    return type
 endfunction
 
 function! ghci#filltype()
-    call ghci#type()
-    execute "normal! \"=tmux#read(1)\<CR>Pj"
+    let saveReg = @a
+    let @a = ghci#type()
+    normal! "aPj
+    let @a = saveReg
 endfunction
 
 
+function! ghci#reloadfile()
+    call tmux#send(":load " . expand("%:p") . "\n")
+endfunction
