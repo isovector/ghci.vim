@@ -39,14 +39,17 @@ it's a shitty mode and a really good key):
     - get the type of the symbol under the cursor
 - `sT`
     - fill in the type of the definition under the cursor
-    - ```haskell
-      test a = show a
-      ```
-    - press `sT` with the cursor anywhere on this line
-    - ```haskell
-      test :: Show a => a -> [Char]
-      test a = show a
-      ```
+
+        ```haskell
+        test a = show a
+        ```
+
+    - press `sT` with the cursor anywhere on this line, result:
+
+        ```haskell
+        test :: Show a => a -> [Char]
+        test a = show a
+        ```
 
 On your first invocation of a `ghci.vim` command, you will be asked to choose a
 tmux pane.
