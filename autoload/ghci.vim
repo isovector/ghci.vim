@@ -43,6 +43,14 @@ function! ghci#filltype()
         return
     endif
 
+    if getline(data[1]) =~ "::"
+        let winview = winsaveview()
+        execute data[1] . "d"
+        let data[2] = join( split(data[2], "\n")[1:], "\n")
+        call winrestview(winview)
+        normal! gk
+    endif
+
     call tmux#sendcode(data[2])
     call append(data[1] - 1, ghci#type(data[0]))
 endfunction

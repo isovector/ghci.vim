@@ -1,5 +1,6 @@
 let s:last_selected_pane = ""
 let s:target = ""
+let s:retry_send = ""
 
 function! g:_TmuxPickPaneFromBuf()
     " Get current line under the cursor
@@ -20,6 +21,17 @@ function! g:_TmuxPickPaneFromBuf()
 
     let s:target = target_pane
     let s:last_selected_pane = target_pane
+
+    call tmux#init()
+endfunction
+
+function! tmux#init()
+    call tmux#send(repeat("\n", tmux#height()))
+
+    if len(s:retry_send) !=# 0
+        call tmux#send(s:retry_send)
+        let s:retry_send = ""
+    endif
 endfunction
 
 function! tmux#SelectPane()
@@ -90,7 +102,7 @@ endfunction
 
 function! tmux#height()
     return tmux#do("display-message -pF '#{pane_height}'")
-end
+endfunction
 
 function! tmux#do(cmd)
     return system("tmux " . a:cmd . " -t " . s:target)
@@ -124,6 +136,12 @@ function! tmux#read(startLine, ...)
 endfunction
 
 function! tmux#send(text)
+    if s:target ==# ""
+        let s:retry_send = a:text
+        call tmux#SelectPane()
+        return
+    endif
+
     " The limit of text bytes tmux can send one time. 500 is a safe value.
     let s:sent_text_length_limit = 500
     let text = a:text
