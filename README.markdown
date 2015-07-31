@@ -34,7 +34,7 @@ it's a shitty mode and a really good key):
     - character-wise movements will be printed in `ghci`, while line-wise will
         be entered as a definition
 - `sL`
-    - reload the current buffer in `ghci` (requires saving first)
+    - reload the current buffer in `ghci`
 - `st`
     - get the type of the symbol under the cursor
 - `sT`
@@ -50,6 +50,12 @@ it's a shitty mode and a really good key):
         test :: Show a => a -> [Char]
         test a = show a
         ```
+- `sr`
+    - sync the current definition to `ghci` and run a command afterwards
+    - the first time you use this, you will be asked to set the command
+    - this can be used to set test a function you're writing
+- `sR`
+    - clear the command assigned on the current definition
 
 On your first invocation of a `ghci.vim` command, you will be asked to choose a
 tmux pane.

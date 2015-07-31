@@ -184,6 +184,10 @@ function! ghci#unsettest(...)
         let name = a:1
     end
 
+    if !has_key(s:funcTest, name)
+        return
+    end
+
     let func = s:funcTest[name]
     let buf = bufnr("%")
     execute "sign unplace " . func.sign . " buffer=" . buf
