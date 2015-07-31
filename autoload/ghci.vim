@@ -126,6 +126,36 @@ function! ghci#getarounddef()
     return [name, firstLine, lines]
 endfunction
 
+function! ghci#defnI()
+    return s:defnObj(0)
+endfunction
+
+function! ghci#defnA()
+    return s:defnObj(1)
+endfunction
+
+function! s:defnObj(around)
+    let data = ghci#getarounddef()
+    if len(data) ==# 0
+        return 0
+    end
+
+    let lines = reverse(split(data[2], "\n"))
+    let empty = 0
+
+    if a:around == 0
+        let i = 0
+        while lines[i] =~ "\\v^\\s*$"
+            let empty = empty + 1
+            let i = i + 1
+        endwhile
+    endif
+
+    let lineCount = len(lines) - empty - 1
+    let endLine = data[1] + lineCount
+    return ['v', [0, data[1], 0, 0], [0, endLine, len(getline(endLine)), 0]]
+endfunction
+
 function! ghci#ignoremodule(text)
     let lines = split(a:text, "\n")
 
@@ -174,6 +204,4 @@ function! ghci#loadimports()
 
     call winrestview(winview)
 endfunction
-
-nnoremap ;' :source %<CR>
 

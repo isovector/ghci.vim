@@ -4,4 +4,15 @@ nnoremap <silent> st :call ghci#type(expand("<cword>"))<CR>
 nnoremap <silent> sT :call ghci#filltype()<CR>
 nnoremap <silent> sL :call ghci#reloadbuffer()<CR>
 
+" We can do move-n-function
+call textobj#user#plugin('ghcivim', {
+\   'defn': {
+\     'select-a-function': 'ghci#defnA',
+\     'select-a': 'ab',
+\     'select-i-function': 'ghci#defnI',
+\     'select-i': 'ib',
+\   },
+\ })
+
+nnoremap ;' :source %<CR>
 
