@@ -56,13 +56,15 @@ function! ghci#filltype()
 endfunction
 
 function! ghci#reloadbuffer()
-    call tmux#sendcode(ghci#ignoremodule(tmux#getbuffer()))
+    let tmpfile = tempname() . ".hs"
+    exe "w " . tmpfile
+    call tmux#send(":load " . tmpfile . "\n")
 endfunction
 
+" TODO: probably deprecate this
 function! ghci#reloadfile()
     call tmux#send(":load " . expand("%:p") . "\n")
 endfunction
-
 
 function! ghci#getarounddef()
     let winview = winsaveview()
@@ -137,6 +139,40 @@ function! ghci#ignoremodule(text)
     endif
 
     return a:text
+endfunction
+
+" TODO: not sure we need this either
+function! ghci#loadimports()
+    let winview = winsaveview()
+    let inImport = 0
+    let curImport = ""
+
+    normal! gg
+    while 1
+        if line(".") ==# line("$")
+            break
+        endif
+
+        let line = getline(".")
+        if inImport
+            if line =~ "^\\v\\s+"
+                let curImport = curImport . line
+            else
+                let inImport = 0
+                call tmux#sendcode(curImport)
+                let curImport = ""
+            end
+        endif
+
+        if line =~ "\\v^import\\s"
+            let curImport = line
+            let inImport = 1
+        endif
+
+        normal! j
+    endwhile
+
+    call winrestview(winview)
 endfunction
 
 nnoremap ;' :source %<CR>
