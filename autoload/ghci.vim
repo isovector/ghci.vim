@@ -55,6 +55,10 @@ function! ghci#filltype()
     call append(data[1] - 1, ghci#type(data[0]))
 endfunction
 
+function! ghci#reloadbuffer()
+    call tmux#sendcode(ghci#ignoremodule(tmux#getbuffer()))
+endfunction
+
 function! ghci#reloadfile()
     call tmux#send(":load " . expand("%:p") . "\n")
 endfunction
@@ -119,4 +123,21 @@ function! ghci#getarounddef()
 
     return [name, firstLine, lines]
 endfunction
+
+function! ghci#ignoremodule(text)
+    let lines = split(a:text, "\n")
+
+    if lines[0] =~ "^module"
+        let i = 1
+        while lines[i] =~ "^\\v\\s+"
+            let i = i + 1
+        endwhile
+
+        return join(lines[(i):], "\n")
+    endif
+
+    return a:text
+endfunction
+
+nnoremap ;' :source %<CR>
 

@@ -197,7 +197,7 @@ function! s:GetVisual() range
     return selection
 endfunction
 
-function! s:GetBuffer()
+function! tmux#getbuffer()
     let l:winview = winsaveview()
     let reg_save = getreg('"')
     let regtype_save = getregtype('"')
