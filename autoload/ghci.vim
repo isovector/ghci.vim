@@ -1,3 +1,8 @@
+sign define ghcitest text=HS
+
+let s:nextSign = 65535
+let s:funcTest = { }
+
 function! ghci#sendmove(type, ...)
     let saveSel = &selection
     let &selection = "inclusive"
@@ -43,7 +48,7 @@ function! ghci#filltype()
         return
     endif
 
-    if getline(data[1]) =~ "::"
+    if data[3]
         let winview = winsaveview()
         execute data[1] . "d"
         let data[2] = join( split(data[2], "\n")[1:], "\n")
@@ -123,7 +128,7 @@ function! ghci#getarounddef()
     call winrestview(winview)
     let @/ = saveSearch
 
-    return [name, firstLine, lines]
+    return [name, firstLine, lines, getline(firstLine) =~ "::"]
 endfunction
 
 function! ghci#defnI()
@@ -169,6 +174,51 @@ function! ghci#ignoremodule(text)
     endif
 
     return a:text
+endfunction
+
+function! ghci#unsettest(...)
+    if !a:0
+        let data = ghci#getarounddef()
+        let name = data[0]
+    else
+        let name = a:1
+    end
+
+    let func = s:funcTest[name]
+    let buf = bufnr("%")
+    execute "sign unplace " . func.sign . " buffer=" . buf
+    unlet s:funcTest[name]
+endfunction
+
+function! ghci#settest(data)
+    call inputsave()
+    let test = input('Test to run for ' . a:data[0] . ': ')
+    call inputrestore()
+
+    if !len(test)
+        return 0
+    end
+
+    let s:funcTest[a:data[0]] = { 'sign': s:nextSign, 'test': test }
+    let line = a:data[1] + (a:data[3] ? 1 : 0)
+
+    let buf = bufnr("%")
+    execute "sign place " . s:nextSign . " name=ghcitest line=" . line . " buffer=" . buf
+    let s:nextSign = s:nextSign + 1
+
+    return 1
+endfunction
+
+function! ghci#runtest()
+    let data = ghci#getarounddef()
+    if !has_key(s:funcTest, data[0])
+        if !ghci#settest(data)
+            return
+        end
+    endif
+
+    call tmux#sendcode(data[2])
+    call tmux#send(s:funcTest[data[0]].test . "\n")
 endfunction
 
 " TODO: not sure we need this either
