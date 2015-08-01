@@ -1,5 +1,4 @@
 " TODO:
-"   - then fix typedef checking for filltype
 "   - autocomplete
 "   - refactor into where?
 "   - INDENTING
@@ -148,27 +147,49 @@ function! s:getfunction()
     return name
 endfunction
 
+function! s:isline(which)
+    return line(".") ==# (a:which =~ "\\v[0-9]+" ? a:which : line(a:which))
+endfunction
+
 function! ghci#getarounddef()
     let winview = winsaveview()
+    let name = ""
+    let start = line(".")
 
-    keepjumps normal! {j
-    while line(".") != line("^") && getline(".") =~ "\\v^\\s"
-        keepjumps normal! k{j
+    while !s:isline("1")
+        keepjumps normal! {j
+        while !s:isline("1") && getline(".") =~ "\\v^\\s"
+            keepjumps normal! k{j
+        endwhile
+
+        if getline(".") =~ "\\v^(data|import|module|newtype|type|}|])" || s:isline("1")
+            break
+        endif
+
+        let myname = s:getfunction()
+        if name ==# ""
+            let name = myname
+            let firstline = line(".")
+        elseif name == myname
+            let firstline = line(".")
+        else
+            break
+        endif
+
+        normal! k
     endwhile
 
-    if getline(".") =~ "\\v^(data|import|module|newtype|type|}|])"
+    if name ==# ""
         call winrestview(winview)
         return []
     endif
 
-    let firstline = line(".")
-    let name = s:getfunction()
     call winrestview(winview)
-
     normal! ^
-    while line(".") != line("$")
+
+    while !s:isline("$")
         normal j
-        while getline(".") =~ "\\v^\\s"
+        while getline(".") =~ "\\v(^\\s|^$)" && !s:isline("$")
             normal! j
         endwhile
 
@@ -285,7 +306,7 @@ function! ghci#loadimports()
 
     normal! gg
     while 1
-        if line(".") ==# line("$")
+        if s:isline("$")
             break
         endif
 
