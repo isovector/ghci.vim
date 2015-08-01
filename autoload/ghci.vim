@@ -110,11 +110,33 @@ function! ghci#reloadfile()
 endfunction
 
 function! s:extractinfix()
-    if strpart(@*, 0, 1) == '`'
+    if strpart(@a, 0, 1) == '`'
         return expand("<cword>")
     else
-        return "(" . @* . ")"
+        return "(" . @a . ")"
     endif
+endfunction
+
+function! s:getfunction()
+    let line = getline(".")
+    if line =~ "\\v^\\([a-zA-Z(]"
+        " Infix operator
+        execute "normal! %wvhe\"ay\<ESC>"
+        return s:extractinfix()
+    elseif line =~ "\\v^\\("
+        " Full operator
+        execute "normal! v%\"ay\<ESC>"
+        return @a
+    else
+        execute "normal! wvhe\"ay\<ESC>"
+        if strpart(@a, 0, 1) =~ "[a-zA-Z0-9(:]" || @a ==# "="
+            " Regular function
+            normal! ^
+            return expand("<cword>")
+        else
+            return s:extractinfix()
+        endif
+    end
 endfunction
 
 function! ghci#getbetterdef()
@@ -123,30 +145,7 @@ function! ghci#getbetterdef()
         normal! k{j
     endwhile
 
-    let line = getline(".")
-    if line =~ "\\v^\\([a-zA-Z(]"
-        " Infix operator
-        execute "normal! %wvhe\<ESC>"
-        let name = s:extractinfix()
-        return name
-    elseif line =~ "\\v^\\("
-        " Full operator
-        execute "normal! v%\<ESC>"
-        let name = @*
-        return name
-    else
-        execute "normal! wvhe\<ESC>"
-        if strpart(@*, 0, 1) =~ "[a-zA-Z0-9(]"
-            " Regular function
-            normal! ^
-            let name = expand("<cword>")
-            return name
-        else
-            let name = s:extractinfix()
-            return name
-        endif
-    end
-
+    return s:getfunction()
 endfunction
 
 function! ghci#getarounddef()
