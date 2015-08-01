@@ -1,8 +1,39 @@
+" TODO:
+"   - then fix typedef checking for filltype
+"   - autocomplete
+"   - refactor into where?
+"   - INDENTING
+
+
 sign define ghcitest text=HS
 
 let s:nextSign = 65535
 let s:funcTest = { }
 let s:tmpFile = tempname() . ".hs"
+
+function! ghci#istypedef(lineno)
+    let i = a:lineno
+    let success = 0
+
+    while i !=# line("$")
+        let line = getline(i)
+        if i !=# a:lineno && !(line =~ "\\v^\\s")
+            if success
+                return i - a:lineno
+            else
+                return 0
+            end
+        endif
+
+        if line =~ "::"
+            let success = 1
+        endif
+
+        let i += 1
+    endwhile
+
+    return 0
+endfunction
 
 function! ghci#sendmove(type, ...)
     let saveSel = &selection
@@ -51,7 +82,7 @@ function! ghci#filltype()
 
     if data[3]
         let winview = winsaveview()
-        execute data[1] . "d"
+        execute data[1] . "," . (data[1] + data[3] - 1) . "d"
         let data[2] = join( split(data[2], "\n")[1:], "\n")
         call winrestview(winview)
         normal! gk
@@ -69,13 +100,53 @@ function! ghci#capture(what)
 endfunction
 
 function! ghci#reloadbuffer()
-    exe "w " . s:tmpfile
-    call tmux#send(":load " . s:tmpfile . "\n")
+    exe "w " . s:tmpFile
+    call tmux#send(":load " . s:tmpFile . "\n")
 endfunction
 
 " TODO: probably deprecate this
 function! ghci#reloadfile()
     call tmux#send(":load " . expand("%:p") . "\n")
+endfunction
+
+function! s:extractinfix()
+    if strpart(@*, 0, 1) == '`'
+        return expand("<cword>")
+    else
+        return "(" . @* . ")"
+    endif
+endfunction
+
+function! ghci#getbetterdef()
+    normal! {j
+    while line(".") != line("^") && getline(".") =~ "\\v^\\s"
+        normal! k{j
+    endwhile
+
+    let line = getline(".")
+    if line =~ "\\v^\\([a-zA-Z(]"
+        " Infix operator
+        execute "normal! %wvhe\<ESC>"
+        let name = s:extractinfix()
+        return name
+    elseif line =~ "\\v^\\("
+        " Full operator
+        execute "normal! v%\<ESC>"
+        let name = @*
+        return name
+    else
+        execute "normal! wvhe\<ESC>"
+        if strpart(@*, 0, 1) =~ "[a-zA-Z0-9(]"
+            " Regular function
+            normal! ^
+            let name = expand("<cword>")
+            return name
+        else
+            let name = s:extractinfix()
+            return name
+        endif
+    end
+
 endfunction
 
 function! ghci#getarounddef()
@@ -135,7 +206,7 @@ function! ghci#getarounddef()
     call winrestview(winview)
     let @/ = saveSearch
 
-    return [name, firstLine, lines, getline(firstLine) =~ "::"]
+    return [name, firstLine, lines, ghci#istypedef(firstLine)]
 endfunction
 
 function! ghci#defnI()
@@ -211,7 +282,7 @@ function! ghci#settest(data)
     end
 
     let s:funcTest[a:data[0]] = { 'sign': s:nextSign, 'test': test }
-    let line = a:data[1] + (a:data[3] ? 1 : 0)
+    let line = a:data[1] + a:data[3]
 
     let buf = bufnr("%")
     execute "sign place " . s:nextSign . " name=ghcitest line=" . line . " buffer=" . buf

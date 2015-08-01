@@ -23,12 +23,6 @@ function! g:_TmuxPickPaneFromBuf()
     let s:target = target_pane
     let s:last_selected_pane = target_pane
 
-    call tmux#init()
-endfunction
-
-function! tmux#init()
-    call tmux#send(repeat("\n", tmux#height()))
-
     if len(s:retry_send) !=# 0
         call tmux#send(s:retry_send)
         let s:retry_send = ""
