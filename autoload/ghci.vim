@@ -118,94 +118,69 @@ function! s:extractinfix()
 endfunction
 
 function! s:getfunction()
+    let winview = winsaveview()
+    let saveReg = @a
+
+    " So this doesn't work if you have spurious parens
+    " or if you're using a pair or if you're an asshole
     let line = getline(".")
     if line =~ "\\v^\\([a-zA-Z(]"
         " Infix operator
         execute "normal! %wvhe\"ay\<ESC>"
-        return s:extractinfix()
+        let name = s:extractinfix()
     elseif line =~ "\\v^\\("
         " Full operator
         execute "normal! v%\"ay\<ESC>"
-        return @a
+        let name = @a
     else
         execute "normal! wvhe\"ay\<ESC>"
         if strpart(@a, 0, 1) =~ "[a-zA-Z0-9(:]" || @a ==# "="
             " Regular function
-            normal! ^
-            return expand("<cword>")
+            normal! lbb
+            let name = expand("<cword>")
         else
-            return s:extractinfix()
+            let name = s:extractinfix()
         endif
     end
-endfunction
 
-function! ghci#getbetterdef()
-    normal! {j
-    while line(".") != line("^") && getline(".") =~ "\\v^\\s"
-        normal! k{j
-    endwhile
-
-    return s:getfunction()
+    call winrestview(winview)
+    let @a = saveReg
+    return name
 endfunction
 
 function! ghci#getarounddef()
     let winview = winsaveview()
-    let saveSearch = @/
 
-    " Get first TLD above us
-    while 1
-        let line = getline(".")
-
-        " Exit early if we hit a data keyword -- nothing to find
-        if line =~ "\\v^(data|import|module|newtype|type)"
-            echoerr "Not inside a definition"
-            call winrestview(winview)
-            return []
-        endif
-
-        if line =~ "\\v^([^ \t:\\=\\|]+)((\\s+[()a-zA-Z0-9]+)*\\s*(::|\\=|\\|))="
-            silent normal! 0*
-            break
-        elseif line(".") ==# 1
-            echoerr "Not inside a definition"
-            call winrestview(winview)
-            return []
-        endif
-        normal! k
+    keepjumps normal! {j
+    while line(".") != line("^") && getline(".") =~ "\\v^\\s"
+        keepjumps normal! k{j
     endwhile
 
-    " Get the identifier we found from the search register
-    let name = strpart(@/, 2, len(@/) - 4)
-    let @/ = "^" . @/
+    if getline(".") =~ "\\v^(data|import|module|newtype|type|}|])"
+        call winrestview(winview)
+        return []
+    endif
 
-    " Find the first occurance, but dont change jump list
-    call setpos(".", [ 0, 1, 0, 0 ])
-    silent normal! n
-    let firstLine = line(".")
-
-    " Find the next TLD below us, keeping track of lines between
-    let regex = "\\v(^<" . name . ">|^\\s|^$)"
-    let lines = ""
-    while 1
-        let line = getline(".")
-
-        if line =~ regex
-            let lines = lines . line . "\n"
-            if line(".") ==# line("$")
-                break
-            else
-                normal! j
-            endif
-        else
-            break
-        endif
-    endwhile
-
-    " Reset view
+    let firstline = line(".")
+    let name = s:getfunction()
     call winrestview(winview)
-    let @/ = saveSearch
 
-    return [name, firstLine, lines, ghci#istypedef(firstLine)]
+    normal! ^
+    while line(".") != line("$")
+        normal j
+        while getline(".") =~ "\\v^\\s"
+            normal! j
+        endwhile
+
+        if s:getfunction() !=# name
+            break
+        end
+    endwhile
+
+    let lines = join(getline(firstline, line(".") - 1), "\n")
+
+    call winrestview(winview)
+    return [name, firstline, lines, ghci#istypedef(firstline)]
 endfunction
 
 function! ghci#defnI()
