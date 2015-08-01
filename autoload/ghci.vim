@@ -58,7 +58,14 @@ function! ghci#filltype()
     endif
 
     call tmux#sendcode(data[2])
-    call append(data[1] - 1, ghci#type(data[0]))
+    let type = ghci#capture(":type " . data[0] . "\n")
+    call append(data[1] - 1, type)
+endfunction
+
+function! ghci#capture(what)
+    call tmux#capture()
+    call tmux#send(a:what) " no implicit newline so we can do autocomplete later
+    return s:sanitize(tmux#getcapture())
 endfunction
 
 function! ghci#reloadbuffer()
@@ -259,7 +266,7 @@ function! ghci#loadimports()
     call winrestview(winview)
 endfunction
 
-function! ghci#parsetmux(ugly)
+function! s:sanitize(ugly)
     let result = join(a:ugly, "\n")
     let result = substitute(result, "\x1B>", "\n", "g")
     let result = substitute(result, "\x1B.", "", "g")

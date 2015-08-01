@@ -140,6 +140,7 @@ function! tmux#read(startLine, ...)
 endfunction
 
 function! tmux#capture()
+    call writefile([], s:capture_file)
     call tmux#do("pipe-pane", "'cat >> " . s:capture_file . "'")
 endfunction
 
