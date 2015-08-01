@@ -2,6 +2,7 @@ sign define ghcitest text=HS
 
 let s:nextSign = 65535
 let s:funcTest = { }
+let s:tmpFile = tempname() . ".hs"
 
 function! ghci#sendmove(type, ...)
     let saveSel = &selection
@@ -61,9 +62,8 @@ function! ghci#filltype()
 endfunction
 
 function! ghci#reloadbuffer()
-    let tmpfile = tempname() . ".hs"
-    exe "w " . tmpfile
-    call tmux#send(":load " . tmpfile . "\n")
+    exe "w " . s:tmpfile
+    call tmux#send(":load " . s:tmpfile . "\n")
 endfunction
 
 " TODO: probably deprecate this
@@ -257,5 +257,14 @@ function! ghci#loadimports()
     endwhile
 
     call winrestview(winview)
+endfunction
+
+function! ghci#parsetmux(ugly)
+    let result = join(a:ugly, "\n")
+    let result = substitute(result, "\x1B>", "\n", "g")
+    let result = substitute(result, "\x1B.", "", "g")
+    let lines = split(result, "\n")
+
+    return lines[1:len(lines)-2]
 endfunction
 

@@ -1,6 +1,7 @@
 let s:last_selected_pane = ""
 let s:target = ""
 let s:retry_send = ""
+let s:capture_file = tempname()
 
 function! g:_TmuxPickPaneFromBuf()
     " Get current line under the cursor
@@ -104,7 +105,10 @@ function! tmux#height()
     return tmux#do("display-message -pF '#{pane_height}'")
 endfunction
 
-function! tmux#do(cmd)
+function! tmux#do(cmd, ...)
+    if a:0
+        return system("tmux " . a:cmd . " -t " . s:target . " " . a:1)
+    endif
     return system("tmux " . a:cmd . " -t " . s:target)
 endfunction
 
@@ -133,6 +137,15 @@ function! tmux#read(startLine, ...)
     let result = tmux#do("capture-pane -pS " . startLine . " -E " . endLine)
 
     return strpart(result, 0, len(result) - 1)
+endfunction
+
+function! tmux#capture()
+    call tmux#do("pipe-pane", "'cat >> " . s:capture_file . "'")
+endfunction
+
+function! tmux#getcapture()
+    call tmux#do("pipe-pane")
+    return readfile(s:capture_file)
 endfunction
 
 function! tmux#send(text)
