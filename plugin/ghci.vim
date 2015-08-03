@@ -16,5 +16,6 @@ call textobj#user#plugin('ghcivim', {
 \   },
 \ })
 
-nnoremap ;' :source %<CR>
+" TODO: set a vim filetype for this
+" nnoremap ;' :source %<CR>
 

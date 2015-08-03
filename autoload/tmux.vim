@@ -151,7 +151,7 @@ function! tmux#send(text)
     endif
 
     " The limit of text bytes tmux can send one time. 500 is a safe value.
-    let s:sent_text_length_limit = 500
+    let s:sent_text_length_limit = 1000
     let text = a:text
 
     " If the text is too long, split the text into pieces and send them one by one

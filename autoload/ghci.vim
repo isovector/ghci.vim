@@ -9,6 +9,34 @@ sign define ghcitest text=HS
 let s:nextSign = 65535
 let s:funcTest = { }
 let s:tmpFile = tempname() . ".hs"
+let s:curExts = [ ]
+
+function! s:strip(input_string)
+    return substitute(a:input_string, '^\s*\(.\{-}\)\s*$', '\1', '')
+endfunction
+
+function! s:maps(l, fn)
+    let new_list = deepcopy(a:l)
+    call map(new_list, a:fn)
+    return new_list
+endfunction
+
+function! s:map(fn, l)
+    let new_list = deepcopy(a:l)
+    call map(new_list, string(a:fn) . '(v:val)')
+    return new_list
+endfunction
+
+function! ghci#getextensions()
+    let lines = join(getline("^", 5), "")
+    let tryMatch = matchlist(lines, "\\v\\{-#\\s*LANGUAGE\\s+([^#]+)")
+    if len(tryMatch) ==# 0
+        return []
+    endif
+
+    let matches = split(tryMatch[1], ",")
+    return s:map(function("s:strip"), matches)
+endfunction
 
 function! ghci#istypedef(lineno)
     let i = a:lineno
@@ -99,7 +127,23 @@ function! ghci#capture(what)
 endfunction
 
 function! ghci#reloadbuffer()
-    exe "w " . s:tmpFile
+    exe "w! " . s:tmpFile
+
+    let newExts = ghci#getextensions()
+    if newExts !=# s:curExts
+        if len(s:curExts) !=# 0
+            let noOpts = join(s:maps(s:curExts, '"-XNo" . v:val'), " ")
+            call tmux#send(":set " . noOpts . "\n")
+        endif
+
+        if len(newExts) !=# 0
+            let opts = join(s:maps(newExts, '"-X" . v:val'), " ")
+            call tmux#send(":set " . opts . "\n")
+        endif
+
+        let s:curExts = newExts
+    endif
+
     call tmux#send(":load " . s:tmpFile . "\n")
 endfunction
 
@@ -154,7 +198,6 @@ endfunction
 function! ghci#getarounddef()
     let winview = winsaveview()
     let name = ""
-    let start = line(".")
 
     while !s:isline("1")
         keepjumps normal! {j
