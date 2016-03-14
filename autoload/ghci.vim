@@ -177,7 +177,7 @@ function! s:getfunction()
         let name = @a
     else
         execute "normal! wvhe\"ay\<ESC>"
-        if strpart(@a, 0, 1) =~ "[a-zA-Z0-9(:]" || @a ==# "="
+        if strpart(@a, 0, 1) =~ "[a-zA-Z0-9(:]" || @a ==# "=" || @a ==# "_"
             " Regular function
             normal! lbb
             let name = expand("<cword>")

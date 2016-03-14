@@ -158,7 +158,7 @@ function! tmux#send(text)
     while text != ""
         let local_text = strpart(text, 0, s:sent_text_length_limit)
         let text = strpart(text, s:sent_text_length_limit)
-        let local_text = s:EscapeText(local_text)
+        let local_text = s:EscapeText("\<C-U>"  . local_text)
         call system("tmux set-buffer -- " . local_text)
         call tmux#do("paste-buffer")
     endwhile
