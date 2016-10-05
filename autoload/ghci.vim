@@ -27,15 +27,28 @@ function! s:map(fn, l)
     return new_list
 endfunction
 
+function! s:filtered(fn, l)
+    let new_list = deepcopy(a:l)
+    call filter(new_list, string(a:fn) . '(v:val)')
+    return new_list
+endfunction
+
+function! ghci#isextension(val)
+  return strpart(a:val, 0, 3) == "!!!"
+endfunction
+
+function! ghci#extension(val)
+  return matchstr(a:val, "\\v!!!\\zs([^ ]+)")
+endfunction
+
 function! ghci#getextensions()
-    let lines = join(getline("^", 5), "")
-    let tryMatch = matchlist(lines, "\\v\\{-#\\s*LANGUAGE\\s+([^#]+)")
+    let lines = join(getline("^", 30), "")
+    let tryMatch = s:filtered(function("ghci#isextension"), split(substitute(lines, "\\v\\{-#\\s*LANGUAGE\\s+([^#]+)#-\\}", "!!!\\1,", "g"), ","))
     if len(tryMatch) ==# 0
         return []
     endif
 
-    let matches = split(tryMatch[1], ",")
-    return s:map(function("s:strip"), matches)
+    return s:map(function("ghci#extension"), tryMatch)
 endfunction
 
 function! ghci#istypedef(lineno)
