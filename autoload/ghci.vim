@@ -139,25 +139,35 @@ function! ghci#capture(what)
     return s:sanitize(tmux#getcapture())
 endfunction
 
+function! s:getnegation(val)
+  if strpart(a:val, 0, 2) == "No"
+    return strpart(a:val, 2)
+  endif
+
+  return "No" . a:val
+endfunction
+
+function! s:getflag(val)
+  return "-X" . a:val
+endfunction
+
 function! ghci#reloadbuffer()
     exe "w! " . s:tmpFile
 
     let newExts = ghci#getextensions()
-    if newExts !=# s:curExts
-        if len(s:curExts) !=# 0
-            let noOpts = join(s:maps(s:curExts, '"-XNo" . v:val'), " ")
-            call tmux#send(":set " . noOpts . "\n")
-        endif
-
-        if len(newExts) !=# 0
-            let opts = join(s:maps(newExts, '"-X" . v:val'), " ")
-            call tmux#send(":set " . opts . "\n")
-        endif
-
-        let s:curExts = newExts
+    if len(s:curExts) !=# 0
+      let noOpts = join(s:map(function("s:getflag"), s:map(function("s:getnegation"), s:curExts)), " ")
+      call tmux#send(":set " . noOpts . "\n")
     endif
 
     call tmux#send(":load " . s:tmpFile . "\n")
+
+    if len(newExts) !=# 0
+      let opts = join(s:map(function("s:getflag"), newExts), " ")
+      call tmux#send(":set " . opts . "\n")
+    endif
+
+    let s:curExts = newExts
 endfunction
 
 " TODO: probably deprecate this
