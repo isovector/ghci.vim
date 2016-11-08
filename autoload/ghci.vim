@@ -152,20 +152,20 @@ function! s:getflag(val)
 endfunction
 
 function! ghci#reloadbuffer()
-    exe "w! " . s:tmpFile
+    exe "keepalt w! " . s:tmpFile
 
     let newExts = ghci#getextensions()
-    if len(s:curExts) !=# 0
-      let noOpts = join(s:map(function("s:getflag"), s:map(function("s:getnegation"), s:curExts)), " ")
-      call tmux#send(":set " . noOpts . "\n")
-    endif
+"     if len(s:curExts) !=# 0
+"       let noOpts = join(s:map(function("s:getflag"), s:map(function("s:getnegation"), s:curExts)), " ")
+"       call tmux#send(":set " . noOpts . "\n")
+"     endif
 
     call tmux#send(":load " . s:tmpFile . "\n")
 
-    if len(newExts) !=# 0
-      let opts = join(s:map(function("s:getflag"), newExts), " ")
-      call tmux#send(":set " . opts . "\n")
-    endif
+"     if len(newExts) !=# 0
+"       let opts = join(s:map(function("s:getflag"), newExts), " ")
+"       call tmux#send(":set " . opts . "\n")
+"     endif
 
     let s:curExts = newExts
 endfunction
