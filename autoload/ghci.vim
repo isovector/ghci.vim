@@ -10,6 +10,7 @@ let s:nextSign = 65535
 let s:funcTest = { }
 let s:tmpFile = tempname() . ".hs"
 let s:curExts = [ ]
+let s:curFile = ""
 
 function! s:strip(input_string)
     return substitute(a:input_string, '^\s*\(.\{-}\)\s*$', '\1', '')
@@ -152,22 +153,27 @@ function! s:getflag(val)
 endfunction
 
 function! ghci#reloadbuffer()
-    exe "w! " . s:tmpFile
+"     let newExts = ghci#getextensions()
+"     if len(s:curExts) !=# 0
+"       let noOpts = join(s:map(function("s:getflag"), s:map(function("s:getnegation"), s:curExts)), " ")
+"       call tmux#send(":set " . noOpts . "\n")
+"     endif
 
-    let newExts = ghci#getextensions()
-    if len(s:curExts) !=# 0
-      let noOpts = join(s:map(function("s:getflag"), s:map(function("s:getnegation"), s:curExts)), " ")
-      call tmux#send(":set " . noOpts . "\n")
+    let thisFile = expand("%:p")
+    if s:curFile == thisFile
+      call tmux#send(":r\n")
+    else
+      call tmux#send(":load " . thisFile . "\n")
     endif
 
-    call tmux#send(":load " . s:tmpFile . "\n")
+    let s:curFile = thisFile
 
-    if len(newExts) !=# 0
-      let opts = join(s:map(function("s:getflag"), newExts), " ")
-      call tmux#send(":set " . opts . "\n")
-    endif
+"     if len(newExts) !=# 0
+"       let opts = join(s:map(function("s:getflag"), newExts), " ")
+"       call tmux#send(":set " . opts . "\n")
+"     endif
 
-    let s:curExts = newExts
+    " let s:curExts = newExts
 endfunction
 
 " TODO: probably deprecate this
