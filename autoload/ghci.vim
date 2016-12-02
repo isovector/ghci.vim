@@ -153,11 +153,7 @@ function! s:getflag(val)
 endfunction
 
 function! ghci#reloadbuffer()
-"     let newExts = ghci#getextensions()
-"     if len(s:curExts) !=# 0
-"       let noOpts = join(s:map(function("s:getflag"), s:map(function("s:getnegation"), s:curExts)), " ")
-"       call tmux#send(":set " . noOpts . "\n")
-"     endif
+    let newExts = ghci#getextensions()
 
     let thisFile = expand("%:p")
     if s:curFile == thisFile
@@ -168,12 +164,17 @@ function! ghci#reloadbuffer()
 
     let s:curFile = thisFile
 
-"     if len(newExts) !=# 0
-"       let opts = join(s:map(function("s:getflag"), newExts), " ")
-"       call tmux#send(":set " . opts . "\n")
-"     endif
+    if newExts !=# s:curExts
+      if len(s:curExts) !=# 0
+        let noOpts = join(s:map(function("s:getflag"), s:map(function("s:getnegation"), s:curExts)), " ")
+        call tmux#send(":seti " . noOpts . "\n")
+      endif
 
-    " let s:curExts = newExts
+      let opts = join(s:map(function("s:getflag"), newExts), " ")
+      call tmux#send(":seti " . opts . "\n")
+    endif
+
+    let s:curExts = newExts
 endfunction
 
 " TODO: probably deprecate this
