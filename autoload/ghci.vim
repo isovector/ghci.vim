@@ -170,8 +170,10 @@ function! ghci#reloadbuffer()
         call tmux#send(":seti " . noOpts . "\n")
       endif
 
-      let opts = join(s:map(function("s:getflag"), newExts), " ")
-      call tmux#send(":seti " . opts . "\n")
+      if len(newExts) !=# 0
+        let opts = join(s:map(function("s:getflag"), newExts), " ")
+        call tmux#send(":seti " . opts . "\n")
+      endif
     endif
 
     let s:curExts = newExts
