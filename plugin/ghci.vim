@@ -8,6 +8,7 @@ nnoremap <silent> zr :call ghci#runtest()<CR>
 nnoremap <silent> zR :call ghci#unsettest()<CR>
 nnoremap <silent> zc :call tmux#send("<C-Q><C-C>")<CR>
 nnoremap <silent> zm :call tmux#send("main<C-Q><CR>")<CR>
+nnoremap <silent> zn :call tmux#send(":r<C-Q><CR>main<C-Q><CR>")<CR>
 
 call textobj#user#plugin('ghcivim', {
 \   'defn': {
